@@ -6,10 +6,11 @@ import { useEffect, useState, useRef } from 'react'
 import BookmarkForm from '@/components/BookmarkForm'
 import BookmarkList from '@/components/BookmarkList'
 import { RealtimeChannel } from '@supabase/supabase-js'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 
 export default function HomePage() {
   const router = useRouter()
+  const pathname = usePathname()
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<{ email: string } | null>(null)
@@ -54,7 +55,7 @@ export default function HomePage() {
         setUser({ email: session.user.email || '' })
         fetchBookmarks()
         // If we're on login page and got session, redirect to home
-        if (router.pathname === '/login') {
+        if (pathname === '/login') {
           console.log('[Page] Got session on login page, redirecting to home')
           router.replace('/')
         }
@@ -62,7 +63,7 @@ export default function HomePage() {
         setUser(null)
         setBookmarks([])
         // Redirect to login if we're on a protected page
-        if (router.pathname !== '/login') {
+        if (pathname !== '/login') {
           console.log('[Page] Lost session, redirecting to login')
           router.replace('/login')
         }
