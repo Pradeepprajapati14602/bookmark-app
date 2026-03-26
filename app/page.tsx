@@ -2,7 +2,7 @@
 
 import { createClientComponentClient } from '@/lib/supabase-client'
 import { Bookmark } from '@/types/database'
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import BookmarkForm from '@/components/BookmarkForm'
 import BookmarkList from '@/components/BookmarkList'
 import { RealtimeChannel } from '@supabase/supabase-js'
@@ -23,6 +23,22 @@ export default function HomePage() {
   }
 
   const supabase = supabaseRef.current
+
+  const fetchBookmarks = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bookmarks')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setBookmarks(data || [])
+    } catch (error) {
+      console.error('Error fetching bookmarks:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase])
 
   useEffect(() => {
     console.log('[Page] Checking session...')
@@ -71,7 +87,7 @@ export default function HomePage() {
     })
 
     return () => subscription.unsubscribe()
-  }, [supabase, router])
+  }, [supabase, router, pathname, fetchBookmarks])
 
   // Add a retry mechanism for initial session check
   useEffect(() => {
@@ -107,23 +123,7 @@ export default function HomePage() {
     if (!user && !checkedSession) {
       attemptCheck()
     }
-  }, [user, checkedSession, supabase])
-
-  const fetchBookmarks = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('bookmarks')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setBookmarks(data || [])
-    } catch (error) {
-      console.error('Error fetching bookmarks:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [user, checkedSession, supabase, fetchBookmarks])
 
   useEffect(() => {
     // Set up real-time subscription (only if we have a user)
